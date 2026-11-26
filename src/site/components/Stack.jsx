@@ -4,7 +4,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion.js';
 import { useReveals } from '../hooks/useReveals.js';
 import { clamp, pinProgress, range } from '../lib/math.js';
 import { onFrame, scrollToY } from '../lib/scroll.js';
-import { createPyramid } from '../three/pyramid.js';
+import { shouldRender3D, whenNear } from '../lib/lazy.js';
 import { Toolkit } from './Toolkit.jsx';
 
 /**
@@ -30,14 +30,20 @@ export function Stack() {
 
   useEffect(() => {
     let pyramid = null;
-    try {
-      pyramid = createPyramid(canvasRef.current, N);
-    } catch (e) {
-      console.warn('Pyramid scene unavailable', e);
-      return undefined;
+    const abort = new AbortController();
+    const canvas = canvasRef.current;
+    if (shouldRender3D()) {
+      whenNear(canvas, abort.signal)
+        .then(() => import('../three/pyramid.js'))
+        .then(({ createPyramid }) => {
+          if (abort.signal.aborted) return;
+          pyramid = createPyramid(canvas, N);
+          pyramid.resize();
+        })
+        .catch((e) => console.warn('Pyramid scene unavailable', e));
     }
-    const ro = new ResizeObserver(() => pyramid.resize());
-    ro.observe(canvasRef.current);
+    const ro = new ResizeObserver(() => pyramid?.resize());
+    ro.observe(canvas);
 
     let current = 0;
     const stop = onFrame((time) => {
@@ -53,12 +59,13 @@ export function Stack() {
       }
       // Reduced motion: every tier already placed, no drift.
       const still = reducedRef.current;
-      pyramid.render(time, still ? N : u, s, !still);
+      pyramid?.render(time, still ? N : u, s, !still);
     });
     return () => {
+      abort.abort();
       stop();
       ro.disconnect();
-      pyramid.dispose();
+      pyramid?.dispose();
     };
   }, []);
 

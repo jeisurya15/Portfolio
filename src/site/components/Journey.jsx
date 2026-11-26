@@ -14,17 +14,28 @@ const SECTION_VH = 380;
 const WINDOW = [0.06, 0.92];
 
 const HOME = { cx: 230, cy: 320, r: 92 };
-const CHIP = { cx: 985, cy: 300, r: 46 };
+const CHIP = { cx: 970, cy: 320, r: 46 };
+
+// Orbit radii. A full-circle arc must start at the top of its orbit and step
+// sideways only (dx, 0); a diagonal step makes the browser pick an off-centre circle.
+const HOME_ORBIT = 128;
+const CHIP_ORBIT = 92;
+// Where the first leg leaves home: 60° clockwise from the top of the orbit.
+const EXIT = {
+  x: HOME.cx + HOME_ORBIT * Math.sin(Math.PI / 3),
+  y: HOME.cy - HOME_ORBIT * Math.cos(Math.PI / 3),
+};
+const ARRIVE = { x: CHIP.cx, y: CHIP.cy - CHIP_ORBIT };
 
 const LEGS = [
-  // Orbits of home: backend foundations.
-  `M${HOME.cx} ${HOME.cy - 128} a128 128 0 1 1 -0.1 0 a128 128 0 0 1 106 57`,
-  // The long coast out: full stack.
-  `M${HOME.cx + 106} ${HOME.cy - 71} C 520 40, 820 70, ${CHIP.cx - 20} ${CHIP.cy - 84}`,
-  // Captured: LLMs and prompt engineering.
-  `M${CHIP.cx - 20} ${CHIP.cy - 84} a86 86 0 1 1 -0.1 0.2 a86 86 0 0 1 20 1`,
-  // Landing: AI engineering.
-  `M${CHIP.cx} ${CHIP.cy - 86} Q ${CHIP.cx + 40} ${CHIP.cy - 70} ${CHIP.cx + 30} ${CHIP.cy - 36}`,
+  // Orbits of home: backend foundations (one lap, then on to the exit point).
+  `M${HOME.cx} ${HOME.cy - HOME_ORBIT} a${HOME_ORBIT} ${HOME_ORBIT} 0 1 1 -0.1 0 A${HOME_ORBIT} ${HOME_ORBIT} 0 0 1 ${EXIT.x} ${EXIT.y}`,
+  // The long coast out: full stack. Arrives level, tangent to the chip's orbit.
+  `M${EXIT.x} ${EXIT.y} C ${EXIT.x + 90} ${EXIT.y - 150}, ${ARRIVE.x - 260} ${ARRIVE.y}, ${ARRIVE.x} ${ARRIVE.y}`,
+  // Captured: LLMs and prompt engineering. One lap around the chip.
+  `M${ARRIVE.x} ${ARRIVE.y} a${CHIP_ORBIT} ${CHIP_ORBIT} 0 1 1 -0.1 0`,
+  // Landing: AI engineering. Spirals in onto the chip's top edge.
+  `M${ARRIVE.x} ${ARRIVE.y} C ${CHIP.cx + 46} ${ARRIVE.y + 4}, ${CHIP.cx + 30} ${CHIP.cy - 50}, ${CHIP.cx} ${CHIP.cy - 38}`,
 ];
 
 // A dotted globe, precomputed: dots on the visible hemisphere, shaded from the left.
@@ -119,7 +130,8 @@ export function Journey() {
 
         <div className="relative flex min-h-0 flex-1 items-center">
           <svg
-            viewBox="0 0 1200 600"
+            // Cropped to the drawing (orbits, arc and labels), so no dead bands above or below.
+            viewBox="40 90 1120 430"
             className="h-auto max-h-full w-full"
             role="img"
             aria-label="A route from backend developer to AI engineer, drawn in four learning phases."
@@ -233,16 +245,16 @@ export function Journey() {
               />
             ))}
 
-            <g ref={packetRef} transform={`translate(${HOME.cx} ${HOME.cy - 128})`}>
+            <g ref={packetRef} transform={`translate(${HOME.cx} ${HOME.cy - HOME_ORBIT})`}>
               <circle r="11" fill="#6fb6ff" opacity="0.25" />
               <rect x="-4.5" y="-4.5" width="9" height="9" rx="1.5" fill="#fff" />
             </g>
 
             <g fontFamily="IBM Plex Mono, monospace" fontSize="13" letterSpacing="2" fill="#8b909b">
-              <text x={HOME.cx} y={HOME.cy + HOME.r + 58} textAnchor="middle">
+              <text x={HOME.cx} y={HOME.cy + HOME_ORBIT + 36} textAnchor="middle">
                 {journey.from.label} · {journey.from.sub}
               </text>
-              <text x={CHIP.cx} y={CHIP.cy + CHIP.r + 70} textAnchor="middle">
+              <text x={CHIP.cx} y={HOME.cy + HOME_ORBIT + 36} textAnchor="middle">
                 {journey.to.label} · {journey.to.sub}
               </text>
             </g>
@@ -251,9 +263,7 @@ export function Journey() {
 
         {/* Current leg. */}
         <div className="grid gap-4 border-t border-white/10 pt-5 md:grid-cols-[auto_1fr_auto] md:items-end md:gap-10">
-          <p className="font-mono text-label text-earth uppercase">
-            {current.when}
-          </p>
+          <p className="font-mono text-label text-earth uppercase">{current.when}</p>
           <div
             key={leg}
             className="animate-[leg-in_0.6s_cubic-bezier(0.2,0.7,0.1,1)]"

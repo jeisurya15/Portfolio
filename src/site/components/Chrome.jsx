@@ -33,6 +33,20 @@ export function Header() {
   const [open, setOpen] = useState(false);
   return (
     <header className="fixed inset-x-0 top-0 z-50 text-white">
+      {/* The hero is a long pinned scroll; let keyboard users jump past it. */}
+      <a
+        href="#work"
+        onClick={(e) => {
+          go(e);
+          const target = document.getElementById('work');
+          if (!target) return;
+          target.setAttribute('tabindex', '-1');
+          target.focus({ preventScroll: true });
+        }}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-1/2 focus:z-[60] focus:-translate-x-1/2 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:text-black"
+      >
+        Skip to projects
+      </a>
       <div className="flex items-center justify-between px-4 pt-4 sm:px-6 sm:pt-5 md:px-[3vw]">
         <a
           href="#top"

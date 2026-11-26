@@ -3,7 +3,7 @@ import { brand, finale } from '../content.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 import { pinProgress, range } from '../lib/math.js';
 import { onFrame } from '../lib/scroll.js';
-import { createFinale } from '../three/finale.js';
+import { shouldRender3D, whenNear } from '../lib/lazy.js';
 
 /**
  * The closing scene. The section pins while a particle galaxy unwinds and
@@ -37,15 +37,21 @@ export function Finale() {
 
   useEffect(() => {
     let scene = null;
-    try {
-      scene = createFinale(canvasRef.current);
-    } catch (e) {
-      console.warn('Finale scene unavailable', e);
+    const abort = new AbortController();
+    const canvas = canvasRef.current;
+    if (shouldRender3D()) {
+      whenNear(canvas, abort.signal)
+        .then(() => Promise.all([import('../three/finale.js'), document.fonts?.ready]))
+        .then(([{ createFinale }]) => {
+          if (abort.signal.aborted) return;
+          // Created after the display font loads, so the words sample correctly.
+          scene = createFinale(canvas);
+          scene.resize();
+        })
+        .catch((e) => console.warn('Finale scene unavailable', e));
     }
-    // Re-sample the words once the display font has loaded.
-    document.fonts?.ready.then(() => scene?.resize());
     const ro = new ResizeObserver(() => scene?.resize());
-    ro.observe(canvasRef.current);
+    ro.observe(canvas);
 
     const stop = onFrame((t) => {
       const root = rootRef.current;
@@ -63,6 +69,7 @@ export function Finale() {
       hintRef.current.style.opacity = String(1 - range(p, 0.05, 0.25));
     });
     return () => {
+      abort.abort();
       stop();
       ro.disconnect();
       scene?.dispose();

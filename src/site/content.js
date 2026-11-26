@@ -25,6 +25,15 @@ export const hero = {
   title: 'JEI SURYA',
   kicker: 'Java full-stack developer · B.Tech IT',
   site: 'SKCET · Coimbatore · 10.94°N 76.96°E',
+  greeting: 'Hi, I’m Jei.',
+  pitch:
+    'I take an idea from database schema to deployed web app: Spring Boot APIs, secure sign-in, and fast, clean React interfaces.',
+  stack: ['Java', 'Spring Boot', 'React', 'MySQL'],
+  // The headline's last word cycles through these.
+  words: ['full-stack apps.', 'Spring Boot APIs.', 'React interfaces.', 'MySQL schemas.'],
+  orbit: ['Java', 'Spring', 'React', 'MySQL', 'JWT', 'REST', 'Maven', 'Git'],
+  status: 'Open to full-time roles & freelance',
+  location: 'Coimbatore, India',
 };
 
 export const intro = {
@@ -155,14 +164,29 @@ export const stack = {
       name: 'Foundations',
       tag: 'Bedrock',
       blurb: 'The languages and fundamentals everything else is built on.',
-      items: ['Java', 'JavaScript', 'SQL', 'C++', 'OOP', 'Data structures & algorithms', 'Git & GitHub'],
+      items: [
+        'Java',
+        'JavaScript',
+        'SQL',
+        'C++',
+        'OOP',
+        'Data structures & algorithms',
+        'Git & GitHub',
+      ],
     },
     {
       name: 'Backend',
       tag: 'Main focus',
       featured: true,
       blurb: 'Where most of my work lives: APIs, data and security, done properly.',
-      items: ['Spring Boot', 'Spring Data JPA', 'REST APIs', 'Node.js · Express', 'MySQL', 'JWT · bcrypt · RBAC'],
+      items: [
+        'Spring Boot',
+        'Spring Data JPA',
+        'REST APIs',
+        'Node.js · Express',
+        'MySQL',
+        'JWT · bcrypt · RBAC',
+      ],
     },
     {
       name: 'Frontend',
@@ -174,7 +198,14 @@ export const stack = {
       name: 'Test & ship',
       tag: 'Delivery',
       blurb: 'Automated tests, builds and deploys, so features actually reach users.',
-      items: ['Selenium WebDriver', 'TestNG', 'Maven', 'Azure App Service', 'Vercel', 'Firebase Hosting'],
+      items: [
+        'Selenium WebDriver',
+        'TestNG',
+        'Maven',
+        'Azure App Service',
+        'Vercel',
+        'Firebase Hosting',
+      ],
     },
     {
       name: 'AI',
@@ -195,11 +226,31 @@ export const stack = {
       accent: '#6fb6ff',
       blurb: 'What I write every day, from typed backends to the browser.',
       items: [
-        { name: 'Java', icon: 'java/java-original', note: 'Main language: Spring Boot services, OOP, collections and streams.' },
-        { name: 'JavaScript', icon: 'javascript/javascript-original', note: 'React front ends and Node.js / Express APIs.' },
-        { name: 'Python', icon: 'python/python-original', note: 'Scripting, automation and data work; my way into LLM tooling.' },
-        { name: 'C++', icon: 'cplusplus/cplusplus-original', note: 'Data structures and algorithms practice.' },
-        { name: 'SQL', icon: 'azuresqldatabase/azuresqldatabase-original', note: 'Joins, aggregates, indexes and query tuning.' },
+        {
+          name: 'Java',
+          icon: 'java/java-original',
+          note: 'Main language: Spring Boot services, OOP, collections and streams.',
+        },
+        {
+          name: 'JavaScript',
+          icon: 'javascript/javascript-original',
+          note: 'React front ends and Node.js / Express APIs.',
+        },
+        {
+          name: 'Python',
+          icon: 'python/python-original',
+          note: 'Scripting, automation and data work; my way into LLM tooling.',
+        },
+        {
+          name: 'C++',
+          icon: 'cplusplus/cplusplus-original',
+          note: 'Data structures and algorithms practice.',
+        },
+        {
+          name: 'SQL',
+          icon: 'azuresqldatabase/azuresqldatabase-original',
+          note: 'Joins, aggregates, indexes and query tuning.',
+        },
       ],
     },
     {
@@ -208,10 +259,26 @@ export const stack = {
       accent: '#5fe3c0',
       blurb: 'Where the data lives, and how it is shaped.',
       items: [
-        { name: 'MySQL', icon: 'mysql/mysql-original', note: 'Primary relational store behind my Spring Boot projects.' },
-        { name: 'SQLite', icon: 'sqlite/sqlite-original', note: 'Lightweight local storage for prototypes and tests.' },
-        { name: 'Sequelize', icon: 'sequelize/sequelize-original', note: 'ORM for Node.js: models, associations, migrations.' },
-        { name: 'Schema design', glyph: 'schema', note: 'Normalisation, keys and relations before a line of code.' },
+        {
+          name: 'MySQL',
+          icon: 'mysql/mysql-original',
+          note: 'Primary relational store behind my Spring Boot projects.',
+        },
+        {
+          name: 'SQLite',
+          icon: 'sqlite/sqlite-original',
+          note: 'Lightweight local storage for prototypes and tests.',
+        },
+        {
+          name: 'Sequelize',
+          icon: 'sequelize/sequelize-original',
+          note: 'ORM for Node.js: models, associations, migrations.',
+        },
+        {
+          name: 'Schema design',
+          glyph: 'schema',
+          note: 'Normalisation, keys and relations before a line of code.',
+        },
       ],
     },
     {
@@ -222,9 +289,21 @@ export const stack = {
       items: [
         { name: 'JWT', glyph: 'jwt', note: 'Stateless auth tokens with expiry and refresh.' },
         { name: 'bcrypt', glyph: 'lock', note: 'Salted password hashing, never plain text.' },
-        { name: 'Role-based access', glyph: 'shield', note: 'RBAC: admin, staff and user permissions on every route.' },
-        { name: 'Zod', icon: 'zod/zod-original', note: 'Schema validation for every request body.' },
-        { name: 'Rate limiting', glyph: 'gauge', note: 'Throttling to stop brute force and abuse.' },
+        {
+          name: 'Role-based access',
+          glyph: 'shield',
+          note: 'RBAC: admin, staff and user permissions on every route.',
+        },
+        {
+          name: 'Zod',
+          icon: 'zod/zod-original',
+          note: 'Schema validation for every request body.',
+        },
+        {
+          name: 'Rate limiting',
+          glyph: 'gauge',
+          note: 'Throttling to stop brute force and abuse.',
+        },
       ],
     },
     {
@@ -233,9 +312,22 @@ export const stack = {
       accent: '#b79bff',
       blurb: 'Getting builds out of my laptop and onto the internet.',
       items: [
-        { name: 'Azure App Service', icon: 'azure/azure-original', note: 'Hosting Java and Node back ends.' },
-        { name: 'Vercel', icon: 'vercel/vercel-original', invert: true, note: 'Front-end deploys with previews on every push.' },
-        { name: 'Firebase Hosting', icon: 'firebase/firebase-original', note: 'Fast static hosting with a CDN.' },
+        {
+          name: 'Azure App Service',
+          icon: 'azure/azure-original',
+          note: 'Hosting Java and Node back ends.',
+        },
+        {
+          name: 'Vercel',
+          icon: 'vercel/vercel-original',
+          invert: true,
+          note: 'Front-end deploys with previews on every push.',
+        },
+        {
+          name: 'Firebase Hosting',
+          icon: 'firebase/firebase-original',
+          note: 'Fast static hosting with a CDN.',
+        },
       ],
     },
     {
@@ -245,11 +337,24 @@ export const stack = {
       blurb: 'The bench every project is built on.',
       items: [
         { name: 'Git', icon: 'git/git-original', note: 'Branches, rebases and clean history.' },
-        { name: 'GitHub', icon: 'github/github-original', invert: true, note: 'Repos, pull requests and Actions.' },
-        { name: 'Maven', icon: 'maven/maven-original', note: 'Java builds and dependency management.' },
+        {
+          name: 'GitHub',
+          icon: 'github/github-original',
+          invert: true,
+          note: 'Repos, pull requests and Actions.',
+        },
+        {
+          name: 'Maven',
+          icon: 'maven/maven-original',
+          note: 'Java builds and dependency management.',
+        },
         { name: 'npm', icon: 'npm/npm-original-wordmark', note: 'Node packages and scripts.' },
         { name: 'VS Code', icon: 'vscode/vscode-original', note: 'Daily editor.' },
-        { name: 'Lombok', glyph: 'chili', note: 'Less Java boilerplate: getters, builders, constructors.' },
+        {
+          name: 'Lombok',
+          glyph: 'chili',
+          note: 'Less Java boilerplate: getters, builders, constructors.',
+        },
       ],
     },
     {
@@ -259,7 +364,11 @@ export const stack = {
       blurb: 'The computer science underneath the frameworks.',
       items: [
         { name: 'OOP', glyph: 'cubes', note: 'Encapsulation, inheritance, polymorphism, SOLID.' },
-        { name: 'Data structures & algorithms', glyph: 'tree', note: 'Arrays to graphs; complexity and trade-offs.' },
+        {
+          name: 'Data structures & algorithms',
+          glyph: 'tree',
+          note: 'Arrays to graphs; complexity and trade-offs.',
+        },
         { name: 'DBMS', glyph: 'cylinder', note: 'Transactions, normal forms and indexing.' },
         { name: 'Testing', glyph: 'check', note: 'Unit tests, Selenium and TestNG.' },
       ],

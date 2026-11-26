@@ -232,8 +232,7 @@ export function Projects() {
     <section
       id="work"
       aria-labelledby="work-title"
-      // Slides up under the hero's last, all-black frames so there is no dead screen between them.
-      className="relative z-10 bg-void md:-mt-[75svh]"
+      className="relative z-10 bg-void"
     >
       {/* Wide screens: pinned showcase. */}
       <div
