@@ -194,6 +194,7 @@ function Details({ project, index }) {
 export function Projects() {
   const rootRef = useRef(null);
   const barRefs = useRef([]);
+  const screenRef = useRef(null);
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -204,6 +205,15 @@ export function Projects() {
       if (!root || root.offsetParent === null) return;
       const { p, rect, vh } = pinProgress(root);
       if (rect.bottom < 0 || rect.top > vh) return;
+
+      // Arrival: 0 while the section is a screen away, 1 once it pins.
+      const arrive = clamp(1 - rect.top / vh);
+      const on = range(arrive, 0.72, 1);
+      const screen = screenRef.current;
+      screen.style.opacity = String(on);
+      screen.style.transform = on < 1 ? `scale(${0.9 + on * 0.1})` : '';
+      screen.style.filter = on < 1 ? `brightness(${1 + (1 - on) * 1.4})` : '';
+
       if (Math.abs(p - lastP) < 0.00005) return;
       lastP = p;
       const u = range(p, 0.03, 0.97) * work.length;
@@ -229,11 +239,7 @@ export function Projects() {
   const project = work[active];
 
   return (
-    <section
-      id="work"
-      aria-labelledby="work-title"
-      className="relative z-10 bg-void"
-    >
+    <section id="work" aria-labelledby="work-title" className="relative z-10 bg-void">
       {/* Wide screens: pinned showcase. */}
       <div
         ref={rootRef}
@@ -242,14 +248,28 @@ export function Projects() {
       >
         <div className="sticky top-0 grid h-screen-s grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-center gap-[4vw] px-[6vw] pt-16">
           <div>
-            <p className="font-mono text-label text-earth uppercase">{intro.eyebrow}</p>
+            <p
+              data-reveal
+              style={{ '--i': 0 }}
+              className="font-mono text-label text-earth uppercase"
+            >
+              {intro.eyebrow}
+            </p>
             <h2
               id="work-title"
+              data-reveal
+              style={{ '--i': 1 }}
               className="mt-4 font-display text-[clamp(1.6rem,2.6vw,2.75rem)] leading-[1.08] text-white"
             >
               {intro.heading}
             </h2>
-            <p className="mt-4 max-w-[26rem] text-body text-regolith/65">{intro.body}</p>
+            <p
+              data-reveal
+              style={{ '--i': 2 }}
+              className="mt-4 max-w-[26rem] text-body text-regolith/65"
+            >
+              {intro.body}
+            </p>
             <ol className="mt-8 border-t border-white/10">
               {work.map((w, i) => (
                 <li key={w.slug} className="border-b border-white/10">
@@ -289,10 +309,14 @@ export function Projects() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <Browser
-              project={project}
-              className="w-full max-w-[calc((100svh-22rem)*1.6)] self-end"
-            />
+            {/* The hero's globe flies onto this window; it powers on as the globe lands. */}
+            <div
+              ref={screenRef}
+              data-fly-target
+              className="w-full max-w-[calc((100svh-22rem)*1.6)] origin-center self-end"
+            >
+              <Browser project={project} className="w-full" />
+            </div>
             <div
               key={project.slug}
               className="self-end animate-[leg-in_0.6s_cubic-bezier(0.2,0.7,0.1,1)] w-full max-w-[calc((100svh-22rem)*1.6)]"
@@ -306,9 +330,15 @@ export function Projects() {
 
       {/* Phones: the same windows, one after another. */}
       <div className="px-4 py-24 sm:px-6 md:hidden">
-        <p className="font-mono text-label text-earth uppercase">{intro.eyebrow}</p>
-        <h2 className="mt-4 font-display text-display text-white">{intro.heading}</h2>
-        <p className="mt-4 text-body text-regolith/65">{intro.body}</p>
+        <p data-reveal style={{ '--i': 0 }} className="font-mono text-label text-earth uppercase">
+          {intro.eyebrow}
+        </p>
+        <h2 data-reveal style={{ '--i': 1 }} className="mt-4 font-display text-display text-white">
+          {intro.heading}
+        </h2>
+        <p data-reveal style={{ '--i': 2 }} className="mt-4 text-body text-regolith/65">
+          {intro.body}
+        </p>
         <ol className="mt-12 space-y-16">
           {work.map((w, i) => (
             <li key={w.slug}>

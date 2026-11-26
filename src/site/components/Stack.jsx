@@ -85,12 +85,12 @@ export function Stack() {
         <div className="sticky top-0 flex h-screen-s flex-col overflow-hidden px-4 pt-20 pb-6 sm:px-6 md:px-[6vw] md:pt-24">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="font-mono text-label text-earth uppercase">{stack.eyebrow}</p>
-              <h2 id="stack-title" className="mt-3 font-display text-display text-white">
+              <p data-reveal style={{ '--i': 0 }} className="font-mono text-label text-earth uppercase">{stack.eyebrow}</p>
+              <h2 id="stack-title" data-reveal style={{ '--i': 1 }} className="mt-3 font-display text-display text-white">
                 {stack.heading}
               </h2>
             </div>
-            <p className="font-mono text-label text-regolith/50 uppercase">{stack.note}</p>
+            <p data-reveal style={{ '--i': 2 }} className="font-mono text-label text-regolith/50 uppercase">{stack.note}</p>
           </div>
 
           <div className="grid min-h-0 flex-1 grid-rows-[1fr_auto] gap-4 pt-4 md:grid-cols-[1.25fr_1fr] md:grid-rows-1 md:gap-10">

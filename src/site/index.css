@@ -142,6 +142,16 @@ html.lenis body {
   .hero-orbit {
     animation: orbit 48s linear infinite;
   }
+  /* Hovering any chip holds the ring still so the chip can be read. */
+  .hero-ring:has(.hero-orbit:hover) .hero-orbit {
+    animation-play-state: paused;
+  }
+
+  /* Orbit and cards clear out early in the hero → projects hand-off (--out: 0 → 1). */
+  .hero-extra {
+    opacity: clamp(0, calc(1 - var(--out, 0) * 2.4), 1);
+    pointer-events: auto;
+  }
 
   /* Floating glass cards. */
   .hero-float > .glass {
@@ -212,6 +222,8 @@ html.lenis body {
     transition:
       opacity 1s cubic-bezier(0.2, 0.7, 0.1, 1),
       transform 1s cubic-bezier(0.2, 0.7, 0.1, 1);
+    /* --i staggers siblings: eyebrow, then heading, then body. */
+    transition-delay: calc(var(--i, 0) * 110ms);
   }
   [data-reveal].is-in {
     opacity: 1;
@@ -394,5 +406,54 @@ html.lenis body {
 @media (prefers-reduced-motion: reduce) {
   .hero-marquee {
     animation-play-state: paused;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Boot intro
+   ------------------------------------------------------------------ */
+/* Hold the hero's entrance until the intro lifts, so it plays where it can be seen. */
+.is-booting .hero-in > * {
+  animation-play-state: paused;
+}
+.intro {
+  clip-path: inset(0 0 0 0);
+  transition:
+    clip-path 0.7s cubic-bezier(0.7, 0, 0.2, 1),
+    opacity 0.7s ease;
+}
+.intro.is-leaving {
+  clip-path: inset(0 0 100% 0);
+  opacity: 0.6;
+}
+.intro-mark path {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: intro-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.intro-mark path + path {
+  animation-delay: 0.25s;
+}
+.intro-word {
+  animation: intro-word 0.8s 0.2s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+.intro-caret {
+  animation: intro-caret 0.9s steps(1) infinite;
+}
+@keyframes intro-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes intro-word {
+  from {
+    opacity: 0;
+    letter-spacing: 0.9em;
+    filter: blur(8px);
+  }
+}
+@keyframes intro-caret {
+  50% {
+    opacity: 0;
   }
 }

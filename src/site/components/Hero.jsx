@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { brand, hero, journey, stack, work } from '../content.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 import { shouldRender3D } from '../lib/lazy.js';
+import { clamp, lerp, range } from '../lib/math.js';
 import { onFrame, scrollToHash } from '../lib/scroll.js';
+
+const easeInOutCubic = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
 
 /**
  * The first screen: who Jei is, what Jei builds, and two ways forward.
@@ -43,6 +46,11 @@ export function Hero() {
   const rootRef = useRef(null);
   const globeRef = useRef(null);
   const sceneRef = useRef(null);
+  const slotRef = useRef(null);
+  const flyRef = useRef(null);
+  const copyRef = useRef(null);
+  const grabRef = useRef(null);
+  const globeApi = useRef(null);
   const reduced = useReducedMotion();
   const reducedRef = useRef(reduced);
   reducedRef.current = reduced;
@@ -61,18 +69,55 @@ export function Hero() {
     let globe = null;
     let cancelled = false;
 
+    // Tells the boot intro the hero is ready to be seen (globe drawn, failed, or skipped).
+    const ready = () => {
+      window.__heroReady = true;
+      window.dispatchEvent(new Event('hero:ready'));
+    };
     if (shouldRender3D()) {
       import('../three/globe.js')
         .then(({ createGlobe }) => {
           if (cancelled) return;
           globe = createGlobe(canvas);
+          globeApi.current = globe;
           canvas.classList.add('opacity-100');
         })
-        .catch((e) => console.warn('Globe unavailable', e));
+        .catch((e) => console.warn('Globe unavailable', e))
+        .finally(ready);
+    } else {
+      ready();
     }
 
     const ro = new ResizeObserver(() => globe?.resize());
     ro.observe(canvas);
+
+    // Drag to spin. Horizontal drags spin; vertical page scrolling still works on touch.
+    const grab = grabRef.current;
+    let lastX = 0;
+    let lastY = 0;
+    const onDown = (e) => {
+      if (!globe) return;
+      grab.setPointerCapture(e.pointerId);
+      lastX = e.clientX;
+      lastY = e.clientY;
+      globe.hold(true);
+      grab.dataset.dragging = '';
+    };
+    const onDrag = (e) => {
+      if (!grab.hasPointerCapture(e.pointerId)) return;
+      globe.nudge((e.clientX - lastX) * 0.006, (e.clientY - lastY) * 0.004);
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+    const onUp = (e) => {
+      if (grab.hasPointerCapture(e.pointerId)) grab.releasePointerCapture(e.pointerId);
+      globe?.hold(false);
+      delete grab.dataset.dragging;
+    };
+    grab.addEventListener('pointerdown', onDown);
+    grab.addEventListener('pointermove', onDrag);
+    grab.addEventListener('pointerup', onUp);
+    grab.addEventListener('pointercancel', onUp);
 
     // Pointer: drives the tilt (eased) and the spotlight (direct).
     const target = { x: 0, y: 0 };
@@ -88,9 +133,18 @@ export function Hero() {
 
     const stop = onFrame((time) => {
       const rect = root.getBoundingClientRect();
-      if (rect.bottom < 0) return;
+      if (rect.bottom < 0) {
+        flyRef.current.style.visibility = 'hidden';
+        return;
+      }
+      flyRef.current.style.visibility = '';
       const still = reducedRef.current;
       globe?.render(time, !still);
+
+      // Hand-off to Projects: over the first screen of scrolling the globe
+      // flies onto the project browser window and fades as that window arrives.
+      const out = clamp(-rect.top / Math.max(1, rect.height));
+      fly(out, still);
       if (still) return;
       tilt.x += (target.x - tilt.x) * 0.06;
       tilt.y += (target.y - tilt.y) * 0.06;
@@ -104,9 +158,50 @@ export function Hero() {
       stop();
       ro.disconnect();
       window.removeEventListener('pointermove', onMove);
+      grab.removeEventListener('pointerdown', onDown);
+      grab.removeEventListener('pointermove', onDrag);
+      grab.removeEventListener('pointerup', onUp);
+      grab.removeEventListener('pointercancel', onUp);
       globe?.dispose();
+      globeApi.current = null;
     };
   }, []);
+
+  /** Places the globe for hand-off progress `out` (0 = in the hero, 1 = on the project window). */
+  function fly(out, still) {
+    const el = flyRef.current;
+    const slot = slotRef.current.getBoundingClientRect();
+    // Orbit, cards and ribbon scatter out first (see .hero-extra), leaving the globe to fly alone.
+    rootRef.current.style.setProperty('--out', out.toFixed(4));
+    const copy = copyRef.current;
+    copy.style.opacity = String(1 - range(out, 0, 0.55));
+    copy.style.transform = still ? '' : `translate3d(0, ${-out * 90}px, 0)`;
+
+    if (out <= 0) {
+      el.style.transform = '';
+      el.style.opacity = '';
+      return;
+    }
+    const target = document.querySelector('[data-fly-target]');
+    const fade = 1 - range(out, 0.82, 1);
+    if (still || !target || target.offsetParent === null) {
+      // Phones / reduced motion: no flight, just a gentle exit. The hero is taller
+      // than a phone screen there, so leave the copy alone while it's being read.
+      el.style.transform = still ? '' : `scale(${1 - out * 0.25})`;
+      el.style.opacity = String(1 - range(out, 0.2, 0.8));
+      copy.style.opacity = '';
+      copy.style.transform = '';
+      return;
+    }
+    const t = target.getBoundingClientRect();
+    const e = easeInOutCubic(out);
+    // The visible sphere is 84% of the slot; land it at ~62% of the window's height.
+    const s = lerp(1, (t.height * 0.62) / (slot.width * 0.84), e);
+    const dx = (t.left + t.width / 2 - (slot.left + slot.width / 2)) * e;
+    const dy = (t.top + t.height / 2 - (slot.top + slot.height / 2)) * e;
+    el.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${s})`;
+    el.style.opacity = String(fade);
+  }
 
   const go = (e) => {
     e.preventDefault();
@@ -120,7 +215,7 @@ export function Hero() {
       id="top"
       ref={rootRef}
       aria-labelledby="hero-title"
-      className="hero relative isolate flex min-h-svh items-center overflow-hidden bg-void"
+      className="hero relative isolate z-20 flex min-h-svh items-center overflow-x-clip bg-void"
     >
       {/* Backdrop: glow behind the globe, a fading grid, and a spotlight that follows the cursor. */}
       <div aria-hidden="true" className="absolute inset-0 -z-10">
@@ -131,7 +226,7 @@ export function Hero() {
       </div>
 
       <div className="grid w-full items-center gap-12 px-4 pt-28 pb-28 sm:px-6 md:grid-cols-[1.1fr_0.9fr] md:px-[6vw] md:pt-24">
-        <div className="hero-in relative z-10">
+        <div ref={copyRef} className="hero-in relative z-10">
           <p className="inline-flex items-center gap-2 rounded-full border border-earth/25 bg-earth/[0.06] px-3 py-1 font-mono text-[0.625rem] whitespace-nowrap text-earth uppercase sm:text-label">
             <span aria-hidden="true">{'</>'}</span> {hero.kicker}
           </p>
@@ -243,13 +338,18 @@ export function Hero() {
           aria-hidden="true"
           className="hero-scene relative mx-auto aspect-square w-[min(72vw,32rem)] md:w-full md:max-w-[36rem]"
         >
-          {/* Tech orbit. */}
-          <div className="hero-depth absolute inset-[-6%]" style={{ '--d': 6 }}>
-            <div className="absolute inset-0 rounded-full border border-dashed border-earth/15" />
+          {/* Tech orbit. Hovering a chip pauses the ring and lights the globe's routes. */}
+          <div
+            className="hero-depth hero-extra hero-ring absolute inset-[-6%]"
+            style={{ '--d': 6 }}
+          >
+            <div className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-earth/15" />
             {hero.orbit.map((t, i) => (
               <span
                 key={t}
-                className="hero-orbit absolute top-1/2 left-1/2 rounded-full border border-white/10 bg-void-2/80 px-2.5 py-1 font-mono text-[0.6875rem] text-regolith shadow-lg backdrop-blur"
+                onPointerEnter={() => globeApi.current?.highlight(true)}
+                onPointerLeave={() => globeApi.current?.highlight(false)}
+                className="hero-orbit absolute top-1/2 left-1/2 z-10 cursor-default rounded-full border border-white/10 bg-void-2/80 px-2.5 py-1 font-mono text-[0.6875rem] text-regolith shadow-lg backdrop-blur transition-colors hover:border-earth/70 hover:bg-earth/15 hover:text-white"
                 style={{ '--a': `${(360 / n) * i}deg` }}
               >
                 {t}
@@ -257,17 +357,29 @@ export function Hero() {
             ))}
           </div>
 
-          {/* Globe. */}
-          <div className="hero-depth absolute inset-[8%]" style={{ '--d': 10 }}>
-            <canvas
-              ref={globeRef}
-              className="size-full opacity-0 transition-opacity duration-1000"
-            />
+          {/* Globe: the slot keeps its place in the layout; the inner layer flies on scroll. */}
+          <div ref={slotRef} className="absolute inset-[8%]">
+            <div
+              ref={flyRef}
+              className="size-full origin-center will-change-transform [perspective:1000px]"
+            >
+              <div className="hero-depth size-full" style={{ '--d': 10 }}>
+                <div
+                  ref={grabRef}
+                  className="size-full cursor-grab touch-pan-y rounded-full data-dragging:cursor-grabbing"
+                >
+                  <canvas
+                    ref={globeRef}
+                    className="size-full opacity-0 transition-opacity duration-1000"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Floating code card. */}
           <div
-            className="hero-depth hero-float absolute top-[4%] left-[-14%] w-[15.5rem] max-md:hidden"
+            className="hero-depth hero-float hero-extra absolute top-[4%] left-[-14%] w-[15.5rem] max-md:hidden"
             style={{ '--d': 26 }}
           >
             <div className="glass rounded-xl p-3.5 font-mono text-[0.6875rem] leading-relaxed">
@@ -297,7 +409,7 @@ export function Hero() {
 
           {/* Floating "now learning" card, from the journey's current phase. */}
           <div
-            className="hero-depth hero-float absolute top-[52%] left-[-22%] w-[12.5rem] max-md:hidden"
+            className="hero-depth hero-float hero-extra absolute top-[52%] left-[-22%] w-[12.5rem] max-md:hidden"
             style={{ '--d': 18, animationDelay: '-5s' }}
           >
             <div className="glass rounded-xl p-3.5">
@@ -323,7 +435,7 @@ export function Hero() {
 
           {/* Floating response card. */}
           <div
-            className="hero-depth hero-float absolute right-[-8%] bottom-[6%] w-[13rem] max-md:hidden"
+            className="hero-depth hero-float hero-extra absolute right-[-8%] bottom-[6%] w-[13rem] max-md:hidden"
             style={{ '--d': 34, animationDelay: '-3s' }}
           >
             <div className="glass rounded-xl p-3.5 font-mono text-[0.6875rem]">
@@ -350,7 +462,7 @@ export function Hero() {
       {/* Bottom ribbon: every tool from the stack, drifting past. */}
       <div
         aria-hidden="true"
-        className="hero-ribbon absolute inset-x-0 bottom-0 border-t border-white/[0.07] bg-void/60 py-3.5 backdrop-blur"
+        className="hero-ribbon hero-extra absolute inset-x-0 bottom-0 border-t border-white/[0.07] bg-void/60 py-3.5 backdrop-blur"
       >
         <div className="hero-marquee flex w-max font-mono text-[0.75rem] tracking-[0.12em] text-dust uppercase">
           {[...tools, ...tools].map((t, i) => (

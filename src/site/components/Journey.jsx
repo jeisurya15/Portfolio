@@ -112,9 +112,17 @@ export function Journey() {
       <div className="sticky top-0 flex h-screen-s flex-col overflow-hidden px-4 pt-20 pb-8 sm:px-6 md:px-[6vw] md:pt-24">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="font-mono text-label text-earth uppercase">{journey.eyebrow}</p>
+            <p
+              data-reveal
+              style={{ '--i': 0 }}
+              className="font-mono text-label text-earth uppercase"
+            >
+              {journey.eyebrow}
+            </p>
             <h2
               id="journey-title"
+              data-reveal
+              style={{ '--i': 1 }}
               className="mt-3 max-w-[22ch] font-display text-display text-white"
             >
               {journey.heading}

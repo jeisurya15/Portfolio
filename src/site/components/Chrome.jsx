@@ -11,7 +11,7 @@ function go(e, then) {
 }
 
 /** Angle brackets: the mark. */
-function Mark({ className = '' }) {
+export function Mark({ className = '' }) {
   return (
     <svg
       viewBox="0 0 24 24"

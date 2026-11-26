@@ -113,7 +113,7 @@ export function createGlobe(canvas) {
     transparent: true,
     depthWrite: false,
     blending: T.AdditiveBlending,
-    uniforms: { uTime: { value: 0 } },
+    uniforms: { uTime: { value: 0 }, uBoost: { value: 0 } },
     vertexShader: /* glsl */ `
       attribute float t; attribute float seed;
       varying float vT; varying float vSeed; varying float vFace;
@@ -124,11 +124,13 @@ export function createGlobe(canvas) {
         gl_Position = projectionMatrix * viewMatrix * w;
       }`,
     fragmentShader: /* glsl */ `
-      uniform float uTime; varying float vT; varying float vSeed; varying float vFace;
+      uniform float uTime; uniform float uBoost;
+      varying float vT; varying float vSeed; varying float vFace;
       void main() {
         float head = fract(uTime * 0.16 + vSeed);
         float pulse = smoothstep(0.18, 0.0, head - vT) * step(vT, head);
-        float a = (0.1 + pulse * 0.9) * smoothstep(-0.15, 0.2, vFace);
+        // uBoost (0..1) lights the whole route and keeps the pulse on top.
+        float a = (0.1 + uBoost * 0.45 + pulse * 0.9) * smoothstep(-0.15, 0.2, vFace);
         gl_FragColor = vec4(mix(vec3(0.43, 0.71, 1.0), vec3(1.0, 0.75, 0.45), pulse * 0.6), a);
       }`,
   });
@@ -191,11 +193,47 @@ export function createGlobe(canvas) {
   }
   resize();
 
+  // User spin on top of the idle drift: an offset plus a velocity that decays (inertia).
+  const drag = { y: 0, x: 0, vy: 0, vx: 0, held: false };
+  let boost = 0;
+  let boostTarget = 0;
+  let last = 0;
+  let pulseClock = 0;
+
   return {
     resize,
+    /** Rotates by a pointer delta in radians; call while dragging. */
+    nudge(dy, dx) {
+      drag.y += dy;
+      drag.x = Math.max(-0.6, Math.min(0.6, drag.x + dx));
+      drag.vy = dy;
+      drag.vx = dx;
+    },
+    hold(held) {
+      drag.held = held;
+    },
+    /** Lights the arcs (true) or lets them settle back (false). */
+    highlight(on) {
+      boostTarget = on ? 1 : 0;
+    },
     render(time, spin = true) {
-      if (spin) globe.rotation.y = -0.6 + time * 0.00004;
-      arcMat.uniforms.uTime.value = time / 1000;
+      const dt = last ? Math.min(0.05, (time - last) / 1000) : 1 / 60;
+      last = time;
+      if (!drag.held) {
+        // Inertia: keep turning after release, slowing down smoothly.
+        const decay = Math.exp(-dt * 3.2);
+        drag.vy *= decay;
+        drag.vx *= decay;
+        drag.y += drag.vy;
+        drag.x = Math.max(-0.6, Math.min(0.6, drag.x + drag.vx));
+      }
+      boost += (boostTarget - boost) * Math.min(1, dt * 6);
+      arcMat.uniforms.uBoost.value = boost;
+      globe.rotation.y = -0.6 + (spin ? time * 0.00004 : 0) + drag.y;
+      globe.rotation.x = 0.32 + drag.x;
+      // Pulse clock advances faster while boosted, without jumping phase.
+      pulseClock += dt * (1 + boost * 1.5);
+      arcMat.uniforms.uTime.value = pulseClock;
       renderer.render(scene, camera);
     },
     dispose() {
