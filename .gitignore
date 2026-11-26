@@ -1,0 +1,21 @@
+# Dependencies and builds
+node_modules/
+dist/
+
+# Local tooling and agent caches
+.agent/
+.agents/
+.claude/
+.freebuff/
+.impeccable/
+.taste-skill/
+blender-skills/
+*.dll
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+.env
+.env.*

@@ -1,0 +1,208 @@
+@import 'tailwindcss';
+
+@source '../';
+
+@theme {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-display: 'Chakra Petch', 'Geist', sans-serif;
+  --color-ink: #f3f5f8;
+  --color-muted: #9aa5b1;
+  --color-faint: #66717d;
+  --color-amber: #ff8a3d;
+  --color-amber-soft: #ffc49a;
+  --color-rose: #ff6b8b;
+  --color-cyan: #6fe3ff;
+  --color-night: #0c1017;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  color-scheme: dark;
+  /* Permanent cinematic letterbox; cinema view deepens it. */
+  --bar: 3.2vh;
+  --gutter: clamp(18px, 4vw, 56px);
+}
+@media (max-width: 760px) {
+  :root {
+    --bar: 0px;
+  }
+}
+.cinema {
+  --bar: 9vh;
+}
+
+html {
+  scroll-behavior: auto;
+  /* The station rail is the progress indicator; a native scrollbar would just disagree with it. */
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+body {
+  margin: 0;
+  background: #121821;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  scrollbar-width: none;
+}
+body::-webkit-scrollbar {
+  display: none;
+}
+::selection {
+  background: rgba(255, 138, 61, 0.35);
+}
+
+/* Stage and cinematic overlays (outside React) */
+#stage {
+  position: fixed;
+  inset: 0;
+}
+#stage canvas {
+  display: block;
+}
+.grabbing #stage canvas {
+  cursor: grabbing;
+}
+.can-inspect #stage canvas {
+  cursor: pointer;
+}
+.shade {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(120% 90% at 78% 40%, transparent 40%, rgba(8, 11, 16, 0.55) 100%),
+    linear-gradient(90deg, rgba(8, 11, 16, 0.78), rgba(8, 11, 16, 0.25) 36%, transparent 58%);
+  transition: opacity 0.8s;
+}
+.cinema .shade {
+  opacity: 0.25;
+}
+@media (max-width: 760px) {
+  .shade {
+    background: linear-gradient(
+        0deg,
+        rgba(8, 11, 16, 0.96),
+        rgba(8, 11, 16, 0.7) 40%,
+        transparent 64%
+      ),
+      linear-gradient(180deg, rgba(8, 11, 16, 0.6), transparent 16%);
+  }
+}
+.letterbox {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: var(--bar);
+  background: #000;
+  z-index: 30;
+  pointer-events: none;
+  transition: height 0.9s var(--ease-out-expo);
+}
+.letterbox.top {
+  top: 0;
+}
+.letterbox.bottom {
+  bottom: 0;
+}
+.cut-curtain {
+  position: fixed;
+  inset: 0;
+  background: #05070a;
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s;
+}
+.camera-cut .cut-curtain {
+  opacity: 1;
+}
+#ui {
+  position: relative;
+  z-index: 10;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #2c3440 transparent;
+}
+kbd {
+  font: 500 10.5px var(--font-mono);
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-ink);
+}
+@layer base {
+  :focus-visible {
+    outline: 1.5px solid var(--color-amber);
+    outline-offset: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── Professional surfaces ──────────────────────────────────────────────── */
+/* In the components layer so Tailwind utilities (padding, hidden, …) can override them. */
+@layer components {
+  .panel {
+    background: rgba(11, 16, 23, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+  .sheet {
+    background: rgba(10, 14, 20, 0.94);
+    border-left: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: -40px 0 100px -30px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-ink);
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
+  }
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+  .btn:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .btn-accent {
+    background: var(--color-amber);
+    border-color: transparent;
+    color: #160a02;
+  }
+  .btn-accent:hover {
+    background: #ff9d5a;
+    border-color: transparent;
+  }
+}
